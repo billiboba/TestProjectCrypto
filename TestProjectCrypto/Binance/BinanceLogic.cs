@@ -33,7 +33,7 @@ namespace TestProjectCrypto.Binance
             if (result.Success)
             {
                 
-                return Math.Round(result.Data.Price, 3);
+                return Math.Round(result.Data.Price, 2);
             }
             return null;
         }
