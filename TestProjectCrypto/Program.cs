@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TestProjectCrypto.Binance;
+using TestProjectCrypto.Bybit;
+using TestProjectCrypto.Services;
 
 namespace TestProjectCrypto
 {
@@ -13,7 +16,9 @@ namespace TestProjectCrypto
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            ICryptoService bybit = new BybitLogic();
+            ICryptoService binance = new BinanceLogic();
+            Application.Run(new Form1(bybit,binance)); 
 
         }
     }

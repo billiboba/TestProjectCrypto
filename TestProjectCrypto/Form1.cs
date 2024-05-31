@@ -1,62 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Bybit.Net.Clients;
-using Timer = System.Windows.Forms.Timer;
+using TestProjectCrypto.Bybit;
+using TestProjectCrypto.Services;
 
 namespace TestProjectCrypto
 {
     public partial class Form1 : Form
     {
+        private readonly ICryptoService _bybitService;
+        private readonly ICryptoService _binanceService;
 
-        private BybitSocketClient _socketClient;
-        private BybitRestClient _bybitClient;
-        private Timer _timer;
-        public Form1()
+        public Form1(ICryptoService bybitService, ICryptoService binanceService)
         {
             InitializeComponent();
-            Load += new EventHandler(Form1_Load);
-            _bybitClient = new BybitRestClient();
-            _timer = new Timer();
-            _timer.Interval = 5000;
-            _timer.Tick += new EventHandler(Timer_Tick);
-            _timer.Start();
-            BybitListBox.SelectedIndexChanged += new EventHandler(ListBoxCryptos_SelectedIndexChanged);
+            _bybitService = bybitService;
+            _binanceService = binanceService;
+            Load += async (sender, e) => await LoadSymbols();
+            BybitListBox.SelectedIndexChanged += async (sender, e) => await BybitListBox_SelectedIndexChanged();
+            BinanceListBox.SelectedIndexChanged += async (sender, e) => await BinanceListBox_SelectedIndexChanged();
+            var timer = new Timer { Interval = 5000 };
+            timer.Tick += async (sender, e) => await Timer_Tick();
+            timer.Start();
         }
 
-        private async void Timer_Tick(object sender, EventArgs e)
-        {
-            string selectedCrypto = BybitListBox.SelectedItem.ToString();
-            await GetPrice(selectedCrypto);
-        }
-
-        private async void Form1_Load(object sender, EventArgs e)
-        {
-            await GetSymbol();
-        }
-
-        protected async Task GetSymbol()
+        private async Task LoadSymbols()
         {
             try
             {
-                var result = await _bybitClient.SpotApiV3.ExchangeData.GetSymbolsAsync();
-                if (result.Success)
-                {
-                    BybitListBox.Items.Clear();
-                    List<string> cryptoNames = new List<string>();
-                    foreach (var symbol in result.Data)
-                    {
-                        cryptoNames.Add(symbol.BaseAsset);
-                    }
-                    cryptoNames = cryptoNames.Distinct().ToList();
-                    BybitListBox.Items.AddRange(cryptoNames.ToArray());
-                }
-                else
-                {
-                    MessageBox.Show("Failed to retrieve data");
-                }
+                await LoadBybitSymbols();
+                await LoadBinanceSymbols();
             }
             catch (Exception ex)
             {
@@ -64,37 +38,51 @@ namespace TestProjectCrypto
             }
         }
 
+        private async Task LoadBybitSymbols()
+        {
+            var cryptoNamesBybit = await _bybitService.GetSymbol();
+            BybitListBox.Items.Clear();
+            BybitListBox.Items.AddRange(cryptoNamesBybit.ToArray());
+        }
 
-        private void ListBoxCryptos_SelectedIndexChanged(object sender, EventArgs e)
+        private async Task LoadBinanceSymbols()
+        {
+            var cryptoNamesBinance = await _binanceService.GetSymbol();
+            BinanceListBox.Items.Clear();
+            BinanceListBox.Items.AddRange(cryptoNamesBinance.ToArray());
+        }
+
+        private async Task BybitListBox_SelectedIndexChanged()
         {
             if (BybitListBox.SelectedItem != null)
             {
-                string selectedCrypto = BybitListBox.SelectedItem.ToString();
-                GetPrice(selectedCrypto);
+                var selectedCrypto = BybitListBox.SelectedItem.ToString();
+                var price = await _bybitService.GetPrice(selectedCrypto);
+                test.Text = price.HasValue ? $"Bybit Current {selectedCrypto} Price: {price} USDT" : "Failed to retrieve data";
             }
         }
 
-        protected async Task GetPrice(string symbol)
+        private async Task BinanceListBox_SelectedIndexChanged()
         {
-            try
+            if (BinanceListBox.SelectedItem != null)
             {
-                string tradingPair = $"{symbol}USDT";
-                var result = await _bybitClient.SpotApiV3.ExchangeData.GetTickerAsync(tradingPair);
-
-                if (result.Success)
-                {
-                    var price = result.Data.LastPrice;
-                    test.Text = $"Current {symbol} Price: {price} USDT";
-                }
-                else
-                {
-                    MessageBox.Show("Failed to retrieve data");
-                }
+                var selectedCrypto = BinanceListBox.SelectedItem.ToString();
+                var price = await _binanceService.GetPrice(selectedCrypto);
+                label1.Text = price.HasValue ? $"Binance Current {selectedCrypto} Price: {price} USDT" : "Failed to retrieve data";
             }
-            catch (Exception ex)
+        }
+
+        private async Task Timer_Tick()
+        {
+            if (BybitListBox.SelectedItem != null)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}");
+                await BybitListBox_SelectedIndexChanged();
+            }
+            if (BinanceListBox.SelectedItem != null)
+            {
+                await BinanceListBox_SelectedIndexChanged();
             }
         }
     }
 }
+
