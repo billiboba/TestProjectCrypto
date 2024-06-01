@@ -32,7 +32,6 @@ namespace TestProjectCrypto.Binance
             var result = await _binanceRestClient.SpotApi.ExchangeData.GetPriceAsync(symbol);
             if (result.Success)
             {
-                
                 return Math.Round(result.Data.Price, 2);
             }
             return null;

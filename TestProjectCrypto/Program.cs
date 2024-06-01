@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TestProjectCrypto.Binance;
+using TestProjectCrypto.Bitget;
 using TestProjectCrypto.Bybit;
+using TestProjectCrypto.Kucoin;
 using TestProjectCrypto.Services;
 
 namespace TestProjectCrypto
@@ -18,7 +20,9 @@ namespace TestProjectCrypto
             Application.SetCompatibleTextRenderingDefault(false);
             ICryptoService bybit = new BybitLogic();
             ICryptoService binance = new BinanceLogic();
-            Application.Run(new Form1(bybit,binance)); 
+            ICryptoService bitget = new BitgetLogic();
+            ICryptoService kucoin = new KucoinLogic();
+            Application.Run(new Form1(bybit,binance,bitget,kucoin)); 
 
         }
     }
