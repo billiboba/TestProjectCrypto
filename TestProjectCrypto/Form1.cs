@@ -203,7 +203,10 @@ namespace TestProjectCrypto
             return resultMessage;
         }
 
+        private void label5_Click(object sender, EventArgs e)
+        {
 
+        }
     }
 }
 
